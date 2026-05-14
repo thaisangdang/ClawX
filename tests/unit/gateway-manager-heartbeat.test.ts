@@ -155,7 +155,7 @@ describe('GatewayManager heartbeat recovery', () => {
     (manager as unknown as { connectionMonitor: { clear: () => void } }).connectionMonitor.clear();
   });
 
-  it('keeps heartbeat recovery disabled on windows', async () => {
+  it('restarts on windows after consecutive heartbeat misses reach the lenient threshold', async () => {
     Object.defineProperty(process, 'platform', { value: 'win32' });
 
     const { GatewayManager } = await import('@electron/gateway/manager');
@@ -180,7 +180,7 @@ describe('GatewayManager heartbeat recovery', () => {
 
     vi.advanceTimersByTime(400_000);
 
-    expect(restartSpy).not.toHaveBeenCalled();
+    expect(restartSpy).toHaveBeenCalledTimes(1);
 
     (manager as unknown as { connectionMonitor: { clear: () => void } }).connectionMonitor.clear();
   });

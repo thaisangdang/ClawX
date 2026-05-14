@@ -1217,17 +1217,13 @@ export class GatewayManager extends EventEmitter {
       onHeartbeatTimeout: ({ consecutiveMisses, timeoutMs }) => {
         this.recordHeartbeatTimeout(consecutiveMisses);
         const pid = this.process?.pid ?? 'unknown';
-        const isWindows = process.platform === 'win32';
-        const shouldAttemptRecovery = !isWindows && this.shouldReconnect && this.status.state === 'running';
+        const shouldAttemptRecovery = this.shouldReconnect && this.status.state === 'running';
         logger.warn(
           `Gateway heartbeat: ${consecutiveMisses} consecutive pong misses ` +
             `(timeout=${timeoutMs}ms, pid=${pid}, state=${this.status.state}, autoReconnect=${this.shouldReconnect}).`,
         );
         if (!shouldAttemptRecovery) {
-          const reason = isWindows
-            ? 'platform=win32'
-            : 'lifecycle is not in auto-recoverable running state';
-          logger.warn(`Gateway heartbeat recovery skipped (${reason})`);
+          logger.warn('Gateway heartbeat recovery skipped (lifecycle is not in auto-recoverable running state)');
           return;
         }
         const initialReadyRecoveryDelayMs = this.getInitialReadyHeartbeatRecoveryDelayMs();
@@ -1258,8 +1254,7 @@ export class GatewayManager extends EventEmitter {
     this.initialReadyHeartbeatRecoveryTimer = setTimeout(() => {
       this.initialReadyHeartbeatRecoveryTimer = null;
       if (
-        process.platform === 'win32'
-        || !this.shouldReconnect
+        !this.shouldReconnect
         || this.status.state !== 'running'
         || this.status.gatewayReady
       ) {
